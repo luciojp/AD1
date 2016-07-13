@@ -1,0 +1,221 @@
+---
+title: "Checkpoint2 AD1 - Análise dos gastos dos deputados federais"
+author: "-"
+date: "8 de julho de 2016"
+output:
+  html_document:
+    theme: yeti
+    toc: true
+    toc_float: true
+    fig_width: 8
+    fig_height: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
+theme_set(theme_bw())
+```
+
+```{r}
+
+deputados = read.csv("ano-atual.csv", encoding="UTF-8")
+
+```
+
+#Distribuição da quantidade de gastos 
+```{r}
+
+ggplot(deputados, mapping = aes( y = txtDescricao,
+                                 x = vlrLiquido)) +
+  xlab("Valor em R$")+
+  ylab("Descrição")+
+  geom_point()
+
+```
+
+
+#Total gasto por tipo de gasto
+
+```{r}
+
+deputados %>% 
+  group_by(txtDescricao) %>%
+  summarise(gastos = (sum(vlrLiquido)/1e6), max(vlrLiquido)) %>%
+  ggplot(mapping = aes(x = reorder(txtDescricao, gastos), y = gastos)) +
+  
+  geom_bar(stat = "identity") +
+  theme(legend.position="none") +
+  xlab("Descrição") +
+  ylab("Valor em milhões de R$") +
+  coord_flip()
+
+```
+
+
+#Desvio padrão dos gastos
+```{r}
+
+desvioDosGastos = deputados %>% 
+  group_by(txtDescricao) %>%  
+  summarise(gastos = sum(vlrLiquido), desvio = sd(vlrLiquido), max(vlrLiquido))
+
+  ggplot(desvioDosGastos, mapping = aes(x = reorder(txtDescricao, desvio), y = desvio)) +
+  geom_bar(stat = "identity") +
+  theme(legend.position="none") +
+  xlab("Descriçãooo") +
+  ylab("Desvio padrão em R$") +
+  coord_flip()
+
+
+```
+
+
+
+#Total gasto por partido
+
+```{r}
+
+deputados %>%
+  group_by(sgPartido) %>%
+  summarise(gastos = sum(vlrLiquido)/1e6, max(vlrLiquido)) %>%
+  ggplot(mapping = aes(x = reorder(sgPartido, gastos), y = gastos)) +
+  
+  geom_bar(stat = "identity") +
+  theme(legend.position="none") +
+  xlab("Partido") +
+  ylab("Valor gasto em milhões de R$") +
+  coord_flip()
+  
+  
+
+```
+
+
+
+#Número de deputados por partidos
+
+```{r}
+
+
+deputadosUnicos = unique(deputados %>% select(txNomeParlamentar, sgPartido)) 
+
+ggplot(deputadosUnicos, mapping = aes(x = deputadosUnicos$sgPartido,
+                                 y = frequency(deputadosUnicos$sgPartido)))+
+   geom_bar(stat = "identity") +
+   xlab("Partidos") +
+   ylab("Número de deputados") +
+   theme(legend.position="none") +
+   coord_flip()
+
+```
+
+
+#Gastos dos deputados paraibanos
+```{r}
+
+deputados %>% 
+  filter(sgUF %in% c("PB")) %>%
+  group_by(txNomeParlamentar) %>%
+  summarise(gastos = sum(vlrLiquido)/ 1e3, max(vlrLiquido)) %>%
+  ggplot(mapping = aes(x = reorder(txNomeParlamentar, gastos), y = gastos)) +
+  
+  geom_bar(stat = "identity") +
+  xlab("Nome do parlamentar") +
+  ylab("Valor da despesa em mil R$")+
+  coord_flip()
+  
+
+```
+
+
+#Gastos por partido na PB
+```{r}
+
+deputados %>%
+  filter(sgUF %in% c("PB")) %>%
+  group_by(sgPartido) %>%
+  summarise(gastos = sum(vlrLiquido)/ 1e3, max(vlrLiquido)) %>% 
+  ggplot(mapping = aes(x = reorder(sgPartido, gastos), y = gastos)) +
+  
+  geom_bar(stat = "identity") +
+  xlab("Partido") +
+  ylab("Valor da despesa em mil R$")+
+  coord_flip()
+
+
+```
+
+#Número de deputados por partido na PB
+
+```{r}
+
+deputadosUnicosPB = unique(deputados %>% filter(sgUF %in% c("PB")) %>% select(txNomeParlamentar, sgPartido))
+
+ggplot(deputadosUnicosPB, mapping = aes(x = deputadosUnicosPB$sgPartido,
+                                y = frequency(deputadosUnicosPB$sgPartido)))+
+  geom_bar(stat = "identity") +
+  xlab("Partidos") +
+  ylab("Número de deputados") +
+  theme(legend.position="none") +
+  coord_flip()
+
+```
+
+#Descrição dos gastos dos deputados da PB
+```{r}
+
+deputados %>%
+  filter(sgUF %in% c("PB")) %>%
+  group_by(txtDescricao) %>%
+  summarise(gastos = sum(vlrLiquido)/ 1e3, max(vlrLiquido)) %>%
+  ggplot(mapping = aes(x = reorder(txtDescricao, gastos), y = gastos)) +
+  
+  geom_bar(stat = "identity") +
+  xlab("Descrição") +
+  ylab("Valor da despesa em mil R$") +
+  theme(legend.position="none") +
+  coord_flip()
+
+```
+
+
+
+
+#Relatório:
+
+##Sobre os políticos da PB (foco):
+
+
+####- Os maiores gastos são com a divulgação da atividade parlamentar
+####- Observando o número de deputados por partido e seus respectivos gastos , vemos que o PSD é o partido que mais tem despesa. E o partido com menor despesa é o PSDB
+####- Há uma grande variância nos gastos dos deputados, chegando um a gastar 5x mais que o outro, não existindo uma centralidade
+
+###O que surpreendeu nos dados:
+
+####- Apenas Luiz Couto e Agnaldo Ribeiro assinam publicações
+####- Apenas Rômulo Gouveia tem gastos com serviço de segurança prestado por empresa privada
+
+###Como lidar com esse dados:
+
+####- Procurar saber que tipo de publicações são essas e porque os demais não tem nenhuma assinatura
+####- Já que Rômulo Gouveia é o único a contratar serviços de segurança, procurar saber se ele já sofreu ameaça de morte, por exemplo.
+
+
+##Sobre os políticos no Brasil:
+
+
+####- Os maiores gastos também são com a divulgação da atividade parlamentar
+####- A maior diferença de gastos de um mesmo tipo, é com a divulgação da atividade parlamentar
+
+###O que surpreendeu nos dados:
+
+####- Existem mais deputados registrados do que os 513 ativos na câmara
+
+###Como lidar com esse dados:
+
+####- A Lei Complementar nº 78, de 30 de dezembro de 1993, estabelece que o número de Deputados não pode ultrapassar quinhentos e treze. Apesar de não estarem ativos na Câmara, ainda sim eles geram despesas. Dependendo do tipo de busca a ser realizada nos dados, terá que se tirar os deputados em questão.
