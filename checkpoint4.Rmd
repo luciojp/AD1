@@ -1,12 +1,158 @@
 ---
-title: "Checkpoint 4"
-author: "Antonio Lúcio"
-date: "13 de julho de 2016"
-output: html_document
+title: "Checkpoint4 AD1 - Análise dos gastos dos deputados federais"
+author: "-"
+date: "8 de julho de 2016"
+output:
+  html_document:
+    theme: yeti
+    toc: true
+    toc_float: true
+    fig_width: 10
+    fig_height: 8
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+```{r}
+library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
+library(datasets)
+theme_set(theme_bw())
+```
 
+```{r}
+deputados = read.csv("ano-atual.csv", encoding="UTF-8")
+
+```
+##1) Analisando os gastos com combustíveis e lubricantes
+###Os 30 deputados que mais gastam são:
+```{r}
+
+deputados %>% 
+  filter(txtDescricaoEspecificacao %in% c("Veículos Automotores")) %>%
+  group_by(txNomeParlamentar) %>% 
+  summarise(gastos = sum(vlrLiquido)) %>%
+  top_n(30) %>%
+  ggplot(aes( x = reorder(txNomeParlamentar, gastos), y = gastos)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome do parlamentar") +
+  ylab("Valor gasto em combustível") +
+  coord_flip()
+
+```
+
+###Sabendo que a distância de carro do Oiapoque ao Chuí é de 5577Km, que o preço médio da gasolina no DF é de R$3,75 e que o carro faz 10km/l chegamos ao seguinte número de idas do Oiapoque ao Chuí dos 30 deputados que mais gastam combustíveis e lubrificantes
+```{r}
+
+deputados %>% 
+  filter(txtDescricaoEspecificacao %in% c("Veículos Automotores")) %>%
+  group_by(txNomeParlamentar) %>% 
+  summarise(idas = ((sum(vlrLiquido) / 3.75) * 10)/ 5577) %>%
+  top_n(30) %>%
+  ggplot(aes( x = reorder(txNomeParlamentar, idas), y = idas)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome do parlamentar") +
+  ylab("Número de viagens") +
+  coord_flip()
+
+```
+
+###Somando todos os gastos dos deputados da referida cota, seria possível dar pouco mais de 566 voltas no mundo
+```{r}
+
+deputados %>% 
+  filter(txtDescricaoEspecificacao %in% c("Veículos Automotores")) %>%
+  summarise(((sum(vlrLiquido) / 3.75) * 10)/ 40000)
+
+```
+
+
+##2) Analisando a relação entre o posicionamento político e as assinaturas de revistas/jornais dos deputados
+
+###Primeiro, quais são as 20 mais assinadas?
+```{r}
+revistas = deputados %>%
+  filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>%
+  group_by(txtFornecedor) %>% count(txtFornecedor) %>% top_n(20)
+
+
+ggplot(revistas, aes(x = reorder(txtFornecedor, n), y = n)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome") +
+  ylab("Número de assinatuas") +
+  coord_flip()
+
+```
+
+###Quantas assinaturas cada partido realizou?
+```{r}
+
+revistasPorPartido = deputados %>% 
+  filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>% 
+  select(sgPartido, txtFornecedor) %>% 
+  group_by(sgPartido) %>% count(sgPartido)
+
+ggplot(revistasPorPartido, aes(x = reorder(sgPartido, n), y = n)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome") +
+  ylab("Número de assinatuas") +
+  coord_flip()
+
+```
+
+###Qual o fornecedor mais assinado por partido?
+```{r}
+
+deputados %>% 
+  filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>% 
+  select(sgPartido, txtFornecedor) %>%
+  group_by(sgPartido) %>% 
+  count(txtFornecedor) %>% top_n(1) %>% 
+  
+  ggplot(aes(x = sgPartido, y = n, fill = txtFornecedor)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome") +
+  ylab("Número de assinatuas") +
+  coord_flip()
+
+```
+
+###Agora observamos os partidos mais bem definidos por tipo de assinatura
+
+```{r}
+
+deputados %>% 
+  filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>% 
+  filter(sgPartido %in% c("PT", "PMDB", "PSDB", "PSOL", "PSC",  "SD", "PTB", "PSD", "PSB", "PR", "PP", "PPS", "DEM", "PCdoB")) %>%
+  select(sgPartido, txtFornecedor) %>%
+  group_by(sgPartido) %>% 
+  count(txtFornecedor) %>% top_n(1) %>% 
+  
+  ggplot(aes(x = sgPartido, y = n, fill = txtFornecedor)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome") +
+  ylab("Número de assinatuas") +
+  coord_flip()
+
+```
+
+###Partidos em que seu fornecedor preferido de assinatuas são únicos
+
+```{r}
+
+deputados %>% 
+  filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>% 
+  filter(sgPartido %in% c("PT", "PTB", "PSC", "PPS")) %>%
+  select(sgPartido, txtFornecedor) %>%
+  group_by(sgPartido) %>% 
+  count(txtFornecedor) %>% top_n(1) %>% 
+  
+  ggplot(aes(x = sgPartido, y = n, fill = txtFornecedor)) +
+  geom_bar(stat = "identity") +
+  xlab("Nome") +
+  ylab("Número de assinatuas") +
+  coord_flip()
+
+```
