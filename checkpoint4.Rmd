@@ -1,7 +1,7 @@
 ---
 title: "Checkpoint4 AD1 - Análise dos gastos dos deputados federais"
-author: "-"
-date: "8 de julho de 2016"
+author: ""
+date: "18 de julho de 2016"
 output:
   html_document:
     theme: yeti
@@ -26,8 +26,12 @@ theme_set(theme_bw())
 deputados = read.csv("ano-atual.csv", encoding="UTF-8")
 
 ```
-##1) Analisando os gastos com combustíveis e lubricantes
-###Os 30 deputados que mais gastam são:
+#Nesta análise, iremos dar a resposta a duas perguntas feitas sobre os gastos dos nossos deputados federais. OBS: Os gastos analisados são de janeiro de 2016 a meados de junho.
+
+## 1ª Pergunta: Sabendo o deputado que mais gasta com combustível, quantas viagens ele daria do Oiapoque ao Chuí com esses gastos?  
+
+###Primeiramente, vamos ampliar a pergunta e ver quem são os 30 deputados federais que mais gastam sua cota com combustíveis e lubrificantes (e não apenas o primeiro):
+
 ```{r}
 
 deputados %>% 
@@ -38,12 +42,12 @@ deputados %>%
   ggplot(aes( x = reorder(txNomeParlamentar, gastos), y = gastos)) +
   geom_bar(stat = "identity") +
   xlab("Nome do parlamentar") +
-  ylab("Valor gasto em combustível") +
+  ylab("Valor gasto em combustível em R$") +
   coord_flip()
 
 ```
 
-###Sabendo que a distância de carro do Oiapoque ao Chuí é de 5577Km, que o preço médio da gasolina no DF é de R$3,75 e que o carro faz 10km/l chegamos ao seguinte número de idas do Oiapoque ao Chuí dos 30 deputados que mais gastam combustíveis e lubrificantes
+###Sabendo que a distância de carro do Oiapoque ao Chuí é de 5577Km, e que o preço médio da gasolina no DF é de R$3,75  (no mês de maio de 2016) e que o carro faça apenas 10km/l chegamos ao seguinte número de idas do Oiapoque ao Chuí dos 30 deputados que mais gastam combustíveis e lubrificantes:
 ```{r}
 
 deputados %>% 
@@ -59,19 +63,19 @@ deputados %>%
 
 ```
 
-###Somando todos os gastos dos deputados da referida cota, seria possível dar pouco mais de 566 voltas no mundo
+###E se somarmos o gasto da referida cota de todos os deputados federais, quantas voltas ao mundo seria possível realizar? Seria possível dar pouco mais de 565 voltas no mundo! Obs: Uma volta na terra sobre a linha do Equador possui 40.075Km
 ```{r}
 
 deputados %>% 
   filter(txtDescricaoEspecificacao %in% c("Veículos Automotores")) %>%
-  summarise(((sum(vlrLiquido) / 3.75) * 10)/ 40000)
+  summarise(((sum(vlrLiquido) / 3.75) * 10)/ 40075)
 
 ```
 
 
-##2) Analisando a relação entre o posicionamento político e as assinaturas de revistas/jornais dos deputados
+##2ª Pergunta: É possível determinar o posicionamento político de um partido através das revistas/jornais que assinam?  
 
-###Primeiro, quais são as 20 mais assinadas?
+###Primeiro, quais são as 20 publicações mais assinadas?
 ```{r}
 revistas = deputados %>%
   filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>%
@@ -86,7 +90,7 @@ ggplot(revistas, aes(x = reorder(txtFornecedor, n), y = n)) +
 
 ```
 
-###Quantas assinaturas cada partido realizou?
+###Agora, quantas assinaturas cada partido realizou?
 ```{r}
 
 revistasPorPartido = deputados %>% 
@@ -96,13 +100,13 @@ revistasPorPartido = deputados %>%
 
 ggplot(revistasPorPartido, aes(x = reorder(sgPartido, n), y = n)) +
   geom_bar(stat = "identity") +
-  xlab("Nome") +
+  xlab("Partido") +
   ylab("Número de assinatuas") +
   coord_flip()
 
 ```
 
-###Qual o fornecedor mais assinado por partido?
+###Qual o fornecedor mais assinado por partido? 
 ```{r}
 
 deputados %>% 
@@ -113,32 +117,32 @@ deputados %>%
   
   ggplot(aes(x = sgPartido, y = n, fill = txtFornecedor)) +
   geom_bar(stat = "identity") +
-  xlab("Nome") +
+  xlab("Partido") +
   ylab("Número de assinatuas") +
   coord_flip()
 
 ```
 
-###Agora observamos os partidos mais bem definidos por tipo de assinatura
+###Agora observamos apenas os partidos mais bem definidos por tipo de assinatura (partidos em que não há empate de fornecedor mais assinado):
 
 ```{r}
 
 deputados %>% 
   filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>% 
-  filter(sgPartido %in% c("PT", "PMDB", "PSDB", "PSOL", "PSC",  "SD", "PTB", "PSD", "PSB", "PR", "PP", "PPS", "DEM", "PCdoB")) %>%
+  filter(sgPartido %in% c("PT", "PMDB", "PSDB", "PSC",  "SD", "PTB", "PSD", "PSB", "PR", "PP", "PPS", "DEM", "PCdoB")) %>%
   select(sgPartido, txtFornecedor) %>%
   group_by(sgPartido) %>% 
   count(txtFornecedor) %>% top_n(1) %>% 
   
   ggplot(aes(x = sgPartido, y = n, fill = txtFornecedor)) +
   geom_bar(stat = "identity") +
-  xlab("Nome") +
+  xlab("Partido") +
   ylab("Número de assinatuas") +
   coord_flip()
 
 ```
 
-###Partidos em que seu fornecedor preferido de assinatuas são únicos
+###Dos partidos mais bem definidos, agora observamos os partidos únicos por preferência de fornecedor(partidos em que não há nenhum outro com a mesma preferência)
 
 ```{r}
 
@@ -151,8 +155,17 @@ deputados %>%
   
   ggplot(aes(x = sgPartido, y = n, fill = txtFornecedor)) +
   geom_bar(stat = "identity") +
-  xlab("Nome") +
+  xlab("Partido") +
   ylab("Número de assinatuas") +
   coord_flip()
 
 ```
+
+####Observando os partidos mais bem definidos acima, e tendo o conhecimento dos fornecedores em questão, podemos dizer que é possivel determinar o posicionamento político de um partido a partir das publicações assinadas. Por exemplo a Editora Confiança LTDA e a RBS Zero Hora LTDA, tem posicionamento mais pró-governo (PT). Já o Infoglobo Comunicação e Participações S/A, tem posicionamento mais contrário ao governo.
+
+###E quem são esses fornecedores?
+
+####Editora Confiança LTDA. Fundada em 2001. Revistas: Carta Capital, Carta na Escola e Carta Fundamental
+####GAD Edição de Jornais LTDA - ME. Fundada em 2011. Jornal Vizão Carazinhense (Carazinho-RS) 
+####Infoglobo Comunicação e Participação S/A. Fundada em 1925. Jornais: O Globo, Extra, Expresso.
+####RBS Zero Hora. Fundada em 1964. Jornal: Zero Hora
