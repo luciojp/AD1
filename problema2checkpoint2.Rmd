@@ -1,0 +1,76 @@
+---
+title: "Problema 2 - Checkpoint2 AD1 "
+author: ""
+date: "26 de julho de 2016"
+output:
+  html_document:
+    theme: yeti
+    toc: true
+    toc_float: true
+    fig_width: 8
+    fig_height: 10
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
+library(datasets)
+theme_set(theme_bw())
+```
+
+```{r}
+deputados = read.csv("ano-atual.csv", encoding="UTF-8")
+
+```
+
+##Analisando o posicionamento político
+
+####O interesse dessa análise é saber o quão diferente é o posicionamento dos partidos políticos a partir das revistas que assinam. Para facilitar a comparação, tomamos como referência as assinaturas do PSDB, assim quanto mais o partido tiver as suas maiores barras na parte inferior, mais alinhado estará com o partido.
+
+####Os fornecedores foram escolhidos baseados na quantidade de assinaturas.
+####Os partidos foram escolhidos buscando deixar mais evidente a divergência entre eles.
+
+####Como PSDB foi utilizado como referência e não possui nenhuma assinatura da revista Carta Capital, logo o fornecedor "NA" que aparece nos gráficos é a revista em questão.
+```{r}
+
+plotar = deputados %>% 
+  ##filter(txtDescricao %in% c("ASSINATURA DE PUBLICAÇÕES")) %>% 
+  filter(txtFornecedor %in% c("LOGGOS - JORNAIS, REVISTAS E PUBLICAÇÕES LTDA.",
+                              "S/A O ESTADO DE S.PAULO", 
+                              "EMPRESA FOLHA DA MANHÃ S/A.", 
+                              "VALOR ECONÔMICO S/A",
+                              "ABRIL COMUNICAÇOES S/A", 
+                              "Infoglobo Comunicação e Partic S/A",
+                              "EDITORA CONFIANÇA LTDA - CARTA CAPITAL")) %>%
+  
+  
+  filter(sgPartido %in% c("PSOL", "PT", "PMDB", "PSDB")) %>%
+  ##filter(sgPartido %in% c("PSDB", "PMDB", "PSB", "PT", "PP", "PR", "PSD", "DEM")) %>%
+  select(sgPartido, txtFornecedor, txNomeParlamentar) %>%
+  group_by(sgPartido) %>% 
+  count(txtFornecedor)  %>% 
+  ungroup()
+
+ordenado = plotar %>% 
+  filter(sgPartido == "PSDB") %>% 
+  arrange(-n)
+
+plotar$txtFornecedor = factor(plotar$txtFornecedor, 
+                              levels = ordenado$txtFornecedor)
+  
+ggplot(plotar, aes(x = txtFornecedor, y = n )) +
+  geom_bar(stat = "identity") +
+  xlab("Fornecedores")+
+  ylab("Número de assinaturas") +
+  coord_flip() +
+  facet_grid(sgPartido ~.)
+
+
+```
+
+####Ao analisar, vemos que a diferença do posicionamento político entre PT e PSDB observada em seus discursos na Câmara dos deputados também se aplica nas assinaturas. Por exemplo, das revistas escolhidas, nenhum deputado do PSDB assinou a Carta Capital (NA) e enquanto no PT a mesma é a mais assinada.
+

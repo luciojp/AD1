@@ -142,6 +142,10 @@ deputados %>%
 
 ```
 
+
+
+
+
 ###Dos partidos mais bem definidos, agora observamos os partidos únicos por preferência de fornecedor(partidos em que não há nenhum outro com a mesma preferência)
 
 ```{r}
@@ -158,6 +162,8 @@ deputados %>%
   xlab("Partido") +
   ylab("Número de assinatuas") +
   coord_flip()
+
+
 
 ```
 
