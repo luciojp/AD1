@@ -10,7 +10,7 @@ lerDados <- function(arquivo){
 }
 
 
-lerDados2 <- function(arquivo = "C:/Users/Lucio/Documents/Problema2Checkpoint3/ano-atual.csv"){
+lerDados2 <- function(arquivo = "ano-atual.csv"){
   require("dplyr", warn.conflicts = FALSE)
   dados = read.csv(arquivo, stringsAsFactors = FALSE, encoding="UTF-8")
   dados = dados %>% 
